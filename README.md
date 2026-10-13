@@ -1,3 +1,5 @@
+[العربية](README.ar.md)
+
 <h1 align="center">Flutter Unused Code</h1>
 
 <p align="center">
@@ -5,6 +7,7 @@
 </p>
 
 <p align="center">
+  <a href="https://pub.dev/packages/flutter_unused_code"><img src="https://img.shields.io/pub/v/flutter_unused_code?style=for-the-badge&logo=dart&label=pub.dev" alt="pub.dev"/></a>
   <img src="https://img.shields.io/badge/Dart-3.11%2B-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
   <img src="https://img.shields.io/badge/Flutter-ready-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
   <img src="https://img.shields.io/badge/package-analyzer-4CAF50?style=for-the-badge" alt="analyzer">
@@ -24,78 +27,78 @@
 > removable lines, JSON, Markdown, or GitHub annotations; `--fail-on-unused` makes it a CI gate.
 > A free, open-source alternative to the now-paid `check-unused-code` of DCM.
 
-<div dir="rtl">
+`dart analyze` only tells you about private code that nobody uses. This tool finds the rest: files
+nobody imports, classes and functions that were forgotten, public methods and fields nobody calls,
+and widgets that were built and never used. It is not regex: it analyzes the project with Dart's
+own analyzer and builds a real reference graph.
 
-`dart analyze` بيقولك على الكود الـ private اللي محدش بيستخدمه وبس. الأداة دي بتلاقيلك الباقي:
-الفايلات اللي محدش بيعملها import، والكلاسات والفانكشنز اللي اتنست، والـ methods والـ fields
-الـ public اللي محدش بينادي عليها، والـ widgets اللي اتعملت ومحدش استخدمها. مش regex: بتحلل
-المشروع بنفس الـ analyzer بتاع Dart وبتبني graph حقيقي للـ references.
+## ✨ What it finds
 
-## ✨ بتلاقي إيه
-
-| النوع | يعني |
+| Kind | Meaning |
 |---|---|
-| 📄 فايل مش مستخدم | فايل في `lib/` مفيش entry point بيوصله لا بـ import ولا export ولا part |
-| 🧱 declaration مش مستخدم | class / enum / mixin / extension / extension type / typedef / function / variable على مستوى الفايل |
-| 🔧 member مش مستخدم | method / getter / setter / field / static / named constructor / operator، public |
-| 🖼 widget مش مستخدم | نفس الـ declarations بس widgets، متعلّم عليها لوحدها في التقرير |
+| 📄 Unused file | A file in `lib/` that no entry point reaches through an import, export or part |
+| 🧱 Unused declaration | A top-level class / enum / mixin / extension / extension type / typedef / function / variable |
+| 🔧 Unused member | A public method / getter / setter / field / static / named constructor / operator |
+| 🖼 Unused widget | The same declarations, but widgets, highlighted separately in the report |
 
-ولكل حاجة بتقولك الفايل والسطر وكام سطر هيتشال لو مسحتها (الـ doc comment والـ annotations محسوبين).
+For each one it tells you the file, the line, and how many lines would go away if you deleted it
+(the doc comment and annotations included).
 
-## 🧠 بتشتغل إزاي
+## 🧠 How it works
 
-- 🔍 بتعمل resolve لكل فايل Dart في المشروع بـ `AnalysisContextCollection`، وبتمشي على الـ AST
-  وتسجل كل reference لـ element حقيقي (مش اسم): identifiers، types، constructors، operators،
-  `super.named()`، dot shorthands، object patterns، الـ annotations، و`call()` الضمني.
-- 🗺 **الفايلات:** بتبدأ من الـ entry points وتمشي على `import` / `export` / `part`، وكل فرع في الـ
-  conditional imports (`if (dart.library.io) ...`). اللي متوصلوش = فايل مش مستخدم.
-- ♻️ **mark-and-sweep:** الـ reference بيتحسب بس لو الكود اللي هو فيه نفسه عايش. يعني:
-  - الـ recursion والكلاس اللي بيشاور على نفسه مش استخدام.
-  - widget محدش بيستخدمه بس الـ `State` بتاعته بتقول `State<MyWidget>` ← برضه هيطلع مش مستخدم.
-  - حاجة مستخدمة بس من كود ميت أو فايل مش متوصل ← ميتة هي كمان.
-- 🧪 **الـ entry points:** `lib/main*.dart`، و`bin/`، و`test/`، و`integration_test/`، و`tool/`، وأي glob
-  تحطه في الـ config. لو المشروع **package** (مفيش `lib/main*.dart` ولا `publish_to: none`)
-  بيبقى كل `lib/*.dart` entry point، واللي بيتعمله export منهم API عام فمش بيتقال عليه مش مستخدم.
+- 🔍 It resolves every Dart file in the project with `AnalysisContextCollection`, walks the AST and
+  records every reference to a real element (not a name): identifiers, types, constructors,
+  operators, `super.named()`, dot shorthands, object patterns, annotations, and the implicit
+  `call()`.
+- 🗺 **Files:** it starts from the entry points and follows `import` / `export` / `part`, and every
+  branch of conditional imports (`if (dart.library.io) ...`). Whatever is not reached = an unused
+  file.
+- ♻️ **Mark-and-sweep:** a reference only counts if the code it sits in is itself alive. That means:
+  - Recursion and a class pointing at itself are not usage.
+  - A widget nobody uses, whose `State` says `State<MyWidget>` ← is still reported as unused.
+  - Something used only by dead code or by an unreached file ← is dead too.
+- 🧪 **Entry points:** `lib/main*.dart`, `bin/`, `test/`, `integration_test/`, `tool/`, and any glob
+  you put in the config. If the project is a **package** (no `lib/main*.dart` and no
+  `publish_to: none`), every `lib/*.dart` is an entry point, and whatever they export is public
+  API, so it is not reported as unused.
 
-## 🛡 بتتجنب الـ false positives إزاي
+## 🛡 How it avoids false positives
 
-- ✅ الـ overrides و الـ members اللي بتعمل implement لـ interface (حتى من غير `@override`).
-- ✅ نداء member من subclass بيحسب للـ declaration الأصلي في الـ superclass/interface.
-- ✅ callbacks بتاعة Flutter: `build`، `createState`، `initState`، `dispose`، `didUpdateWidget`،
-  `didChangeDependencies`، … و conventions زي `toJson` / `fromJson` / `toMap` / `fromMap` / `copyWith` / `props`.
-- ✅ الكود الـ generated (`*.g.dart`، `*.freezed.dart`، `*.gr.dart`، `*.config.dart`، `*.mocks.dart`،
-  `*.gen.dart`، أو أي فايل أوله `GENERATED CODE`): الـ references اللي فيه بتتحسب، بس عمره ما بيتقال عليه مش مستخدم.
-- ✅ `@pragma('vm:entry-point')`، وannotations الـ code-gen والـ DI والـ routing: `@JsonKey`، `@JsonSerializable`،
-  `@freezed`، `@riverpod`، `@HiveField`، `@RoutePage`، `@TypedGoRoute`، `@injectable`، `@singleton`، …
-- ✅ `@visibleForTesting`: مع `--no-test-usage` الـ tests مبتحافظش على أي حاجة غير اللي عليها
+- ✅ Overrides and members that implement an interface (even without `@override`).
+- ✅ A call to a member from a subclass counts for the original declaration in the
+  superclass/interface.
+- ✅ Flutter callbacks: `build`, `createState`, `initState`, `dispose`, `didUpdateWidget`,
+  `didChangeDependencies`, … and conventions such as `toJson` / `fromJson` / `toMap` / `fromMap` / `copyWith` / `props`.
+- ✅ Generated code (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.config.dart`, `*.mocks.dart`,
+  `*.gen.dart`, or any file starting with `GENERATED CODE`): the references inside it count, but it
+  is never reported as unused.
+- ✅ `@pragma('vm:entry-point')`, and code-gen, DI and routing annotations: `@JsonKey`, `@JsonSerializable`,
+  `@freezed`, `@riverpod`, `@HiveField`, `@RoutePage`, `@TypedGoRoute`, `@injectable`, `@singleton`, …
+- ✅ `@visibleForTesting`: with `--no-test-usage`, tests keep nothing alive except what is marked
   `@visibleForTesting`.
-- ✅ الـ enum values والـ unnamed constructors عمرهم ما بيتقال عليهم، والـ private سايبينها لـ `dart analyze`.
-- ✅ الـ field اللي بيتعمله `this.x` في الـ constructor وبس عمره ما اتقرا ← **بيتقال عليه** (ده dead فعلًا).
+- ✅ Enum values and unnamed constructors are never reported, and private code is left to
+  `dart analyze`.
+- ✅ A field that is only set with `this.x` in the constructor and never read ← **is reported**
+  (it really is dead).
 
-## 📦 التسطيب
-
-</div>
+## 📦 Installation
 
 ```bash
-# global, from GitHub
-dart pub global activate --source git https://github.com/youssef336/flutter_unused_code
+# global, from pub.dev
+dart pub global activate flutter_unused_code
 unused_code                       # inside your project
 unused_code path/to/project
 
 # or as a dev dependency
 #   dev_dependencies:
-#     flutter_unused_code:
-#       git: https://github.com/youssef336/flutter_unused_code
+#     flutter_unused_code: ^0.1.0
 dart run flutter_unused_code
 ```
 
-<div dir="rtl">
+You must run `flutter pub get` (or `dart pub get`) in the project first, so the analyzer can
+resolve it.
 
-لازم تكون عامل `flutter pub get` (أو `dart pub get`) في المشروع الأول، عشان الـ analyzer يقدر يعمل resolve.
-
-## 🚀 الاستخدام
-
-</div>
+## 🚀 Usage
 
 ```text
 Usage: unused_code [options] [project-directory]
@@ -129,20 +132,17 @@ Unused widgets (1):
 Analyzed 163 files (app mode) in 12.8s.
 ```
 
-<div dir="rtl">
-
-| الكود | يعني |
+| Code | Meaning |
 |---|---|
-| `0` | تمام (أو لقى حاجات ومفيش `--fail-on-unused`) |
-| `1` | لقى كود مش مستخدم ومعاك `--fail-on-unused` |
-| `64` | arguments أو config غلط |
-| `66` | المشروع مش متحلل (مفيش `pubspec.yaml` أو مفيش `pub get`) |
+| `0` | OK (or it found things and `--fail-on-unused` is not set) |
+| `1` | It found unused code and `--fail-on-unused` is set |
+| `64` | Invalid arguments or config |
+| `66` | The project could not be analyzed (no `pubspec.yaml` or no `pub get`) |
 
-## ⚙️ الـ config
+## ⚙️ Config
 
-حط `unused_code.yaml` جنب الـ `pubspec.yaml` (المفاتيح ممكن تبقى تحت `unused_code:` أو على أول مستوى):
-
-</div>
+Put an `unused_code.yaml` next to the `pubspec.yaml` (the keys can be under `unused_code:` or at
+the top level):
 
 ```yaml
 unused_code:
@@ -159,11 +159,7 @@ unused_code:
   mode: auto               # auto | app | package
 ```
 
-<div dir="rtl">
-
-وفي الكود نفسه:
-
-</div>
+And in the code itself:
 
 ```dart
 // unused_code:ignore
@@ -174,48 +170,48 @@ void debugOnly() {} // unused_code:ignore
 // unused_code:ignore_file          (anywhere in a file: skip the whole file)
 ```
 
-<div dir="rtl">
-
-## 🤖 في الـ CI
-
-</div>
+## 🤖 In CI
 
 ```yaml
-- run: dart pub global activate --source git https://github.com/youssef336/flutter_unused_code
+- run: dart pub global activate flutter_unused_code
 - run: unused_code --format github --fail-on-unused
 ```
 
-<div dir="rtl">
+`--format github` emits everything as an annotation on the line itself in the PR, and
+`--format markdown` can be written to `$GITHUB_STEP_SUMMARY`.
 
-`--format github` بيطلع كل حاجة كـ annotation على السطر نفسه في الـ PR، و`--format markdown`
-تقدر تحطه في `$GITHUB_STEP_SUMMARY`.
+## ❓ FAQ
 
-## ❓ أسئلة
+- **Why is something that is used reported as unused?** Most likely it is used by code that is
+  itself dead (see mark-and-sweep above), or it is called in a way that is not visible in the code
+  (reflection, platform channel, isolate entry point). Add `// unused_code:ignore` or
+  `@pragma('vm:entry-point')`, or add the file to `entry_points`.
+- **What about code used only in tests?** It counts as used by default. If you want to find code
+  that is alive only because of the tests: `--no-test-usage`.
+- **What about model fields that come from the API?** If a field is filled from `fromJson` and
+  nobody reads it, it is reported as unused, and that is correct: deleting it will not break
+  anything. If you want to keep it: `ignore_names` or `// unused_code:ignore` on the class.
+- **Package or app?** It figures it out on its own: app if there is a `lib/main*.dart` or
+  `publish_to: none`, otherwise package. You can force it with `--mode`.
+- **How long does it take?** A Flutter project with 160 files: about 13 seconds (most of it is
+  resolving the SDK and the packages).
+- **Monorepo?** Run it on each package separately. Nested packages (`example/`, `packages/*`) are
+  skipped.
 
-- **ليه حاجة مستخدمة بتطلع إنها مش مستخدمة؟** غالبًا مستخدمة من كود هو نفسه ميت (شوف الـ
-  mark-and-sweep فوق)، أو بتتنادي بطريقة مش ظاهرة في الكود (reflection، platform channel، isolate
-  entry point). حط `// unused_code:ignore` أو `@pragma('vm:entry-point')` أو ضيف الفايل لـ `entry_points`.
-- **الكود اللي مستخدم في الـ tests بس؟** بيتحسب مستخدم by default. لو عايز تعرف الكود اللي عايش
-  بس عشان الـ tests: `--no-test-usage`.
-- **الـ fields بتاعة الـ models اللي بتيجي من الـ API؟** لو field بيتملى من `fromJson` ومحدش بيقراه،
-  هيطلع إنه مش مستخدم، وده صح: مسحه مش هيكسر حاجة. لو عايزه: `ignore_names` أو `// unused_code:ignore` على الكلاس.
-- **package ولا app؟** بيعرف لوحده. app لو فيه `lib/main*.dart` أو `publish_to: none`، وإلا package.
-  تقدر تجبره بـ `--mode`.
-- **بياخد وقت قد إيه؟** مشروع Flutter فيه 160 فايل: حوالي 13 ثانية (أغلبها resolve للـ SDK والـ packages).
-- **monorepo؟** شغلها على كل package لوحدها. الـ packages المتداخلة (`example/`، `packages/*`) بتتساب.
+## ⚖️ Limitations
 
-## ⚖️ الحدود
-
-- مش بيشوف الاستخدام الديناميكي: `dynamic` calls، mirrors، `noSuchMethod`، أسماء جاية من strings،
-  أو كود بيتنادي من native/platform channels.
-- الحيوية على مستوى الـ declaration اللي على مستوى الفايل: لو الكلاس عايش، أي reference من أي method
-  فيه بتتحسب (حتى لو الـ method دي نفسها ميتة). بيقلل الـ false positives بس ممكن يفوّت سلاسل ميتة جوه كلاس عايش.
-- providers الـ Riverpod الـ generated (`fooProvider`) والـ declarations اللي جوه الكود الـ generated عمومًا مش بتتقال.
-- مش بيدور على l10n keys أو assets مش مستخدمة.
-- محتاج `pub get` يكون معمول، ولو فيه packages مش متحلّة النتايج ممكن تبقى غلط.
-- قيم الـ enum والـ unnamed constructors والـ setters المتولدة من fields مش بتتقال لوحدها.
-
-</div>
+- It does not see dynamic usage: `dynamic` calls, mirrors, `noSuchMethod`, names coming from
+  strings, or code called from native/platform channels.
+- Liveness is per top-level declaration: if a class is alive, any reference from any method in it
+  counts (even if that method itself is dead). This reduces false positives but may miss dead
+  chains inside a live class.
+- Generated Riverpod providers (`fooProvider`) and declarations inside generated code in general are
+  not reported.
+- It does not look for unused l10n keys or assets.
+- It needs `pub get` to have been run, and if there are unresolved packages the results may be
+  wrong.
+- Enum values, unnamed constructors and setters generated from fields are not reported on their
+  own.
 
 ## 🛠 Tech stack
 
