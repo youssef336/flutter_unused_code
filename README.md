@@ -1,5 +1,7 @@
 [العربية](README.ar.md)
 
+<p align="center"><img src="https://raw.githubusercontent.com/youssef336/flutter_unused_code/main/screenshots/banner.png" alt="flutter_unused_code banner" width="100%"></p>
+
 <h1 align="center">Flutter Unused Code</h1>
 
 <p align="center">

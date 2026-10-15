@@ -1,0 +1,11 @@
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# README banner (linked by absolute URL, not shipped)
+screenshots/
